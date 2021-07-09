@@ -101,35 +101,35 @@ ggmap(base_map) +
 #removing duplicates, filtering older data and restricting data to N. America
 subulata_df <- subulata_df %>%
   filter(year(date) > 1959) %>%
-  distinct() %>%
-  filter(latitude < 49 & latitude > 28) %>%
-  filter(longitude < -55 & longitude > -127)
+  distinct()
+  #filter(latitude < 49 & latitude > 28) %>%
+  #filter(longitude < -55 & longitude > -127)
 
 asperula_df <- asperula_df %>%
   filter(year(date) > 1959) %>%
-  distinct() %>%
-  filter(latitude < 49 & latitude > 28) %>%
-  filter(longitude < -55 & longitude > -127)
+  distinct()
+  #filter(latitude < 49 & latitude > 28) %>%
+  #filter(longitude < -55 & longitude > -127)
 
 linaria_df <- linaria_df %>%
   filter(year(date) > 1959) %>%
-  distinct() %>%
-  filter(latitude < 49 & latitude > 28) %>%
-  filter(longitude < -55 & longitude > -127)
+  distinct()
+  #filter(latitude < 49 & latitude > 28) %>%
+  #filter(longitude < -55 & longitude > -127)
 
 angustifolia_df <- angustifolia_df %>%
   filter(year(date) > 1959) %>%
-  distinct() %>%
-  filter(latitude < 49 & latitude > 28) %>%
-  filter(longitude < -55 & longitude > -127)
+  distinct()
+  #filter(latitude < 49 & latitude > 28) %>%
+  #filter(longitude < -55 & longitude > -127)
 
 erosa_df <- erosa_df %>%
   filter(year(date) > 1959) %>%
-  distinct() %>%
-  filter(latitude < 49 & latitude > 28) %>%
-  filter(longitude < -55 & longitude > -127)
+  distinct()
+  #filter(latitude < 49 & latitude > 28) %>%
+  #filter(longitude < -55 & longitude > -127)
 
-southwest = get_map("Arizona", zoom = 3)
+southwest <- get_map("Arizona", zoom = 3)
 ggmap(southwest) +
   geom_point(data = subulata_df, aes(x = longitude, y = latitude))
 
@@ -162,6 +162,12 @@ monarch_df <- monarch_df %>%
 
 ggmap(southwest) +
   geom_point(data = monarch_df, aes(x = longitude, y = latitude))
+
+#generating features that will be useful later on -------- ended up not using this, but maybe need to do something here for prep data function?
+# monarch_df_current <- monarch_df %>%
+#   mutate(year = year(date),
+#          time_frame = ifelse(year >= 2000, "current") %>%
+#   select(-data_source))
 
 #importing Bioclim data and cropping ---------------------------- don't actually need to do this, OR DO YOU
 
@@ -242,41 +248,39 @@ bioclim.data
 biovar_avg_combined_current
 plot(biovar_avg_combined[[1]])
 
-#future climate data -----------------------------------------------------------
-#manually downloaded data to test GCM = CNR-CM6-1; SSP126
-#import as raster stack
-
-precip_raster_future <- raster::stack("./data/wc2.1_2.5m_prec_CNRM-CM6-1_ssp126_2021-2040.tif")
-tmin_raster_future <- raster::stack("./data/wc2.1_2.5m_tmin_CNRM-CM6-1_ssp126_2021-2040.tif")
-tmax_raster_future <- raster::stack("./data/wc2.1_2.5m_tmax_CNRM-CM6-1_ssp126_2021-2040.tif")
-
-biovar_list <- list()
-length = dim(precip_raster_future)[3]/12
-seq = 1:12
-
-for(i in 1:length) {
-  precip_sub = precip_raster_future[[seq]]
-  tmin_sub = tmin_raster_future[[seq]]
-  tmax_sub = tmax_raster_future[[seq]]
-
-  biovar_list[[i]] = biovars(prec = precip_sub,
-                             tmin = tmin_sub,
-                             tmax = tmax_sub)
-  seq = seq + 12
-  print(seq)
-}
-
-biovar_avg_combined_future <- raster::brick(nrows = 360, ncols = 720)
-for(i in 1:19) {
-  biovar_sublist = lapply(biovar_list, '[[', i) #pulls out each bioclim variable iteratively
-  biovar_substack = stack(biovar_sublist) #combines all years into a raster stack
+#future climate data -----------------------------------------------don't do this, taken care of in modeling script, update this code
+# #future climate data is read in in modeling script b/c biovars don't need to be calculated, they were downloaded from WorldClim
+# 
+# precip_raster_future <- raster::stack("./data/wc2.1_2.5m_prec_CNRM-CM6-1_ssp126_2021-2040.tif")
+# tmin_raster_future <- raster::stack("./data/wc2.1_2.5m_tmin_CNRM-CM6-1_ssp126_2021-2040.tif")
+# tmax_raster_future <- raster::stack("./data/wc2.1_2.5m_tmax_CNRM-CM6-1_ssp126_2021-2040.tif")
+# 
+# biovar_list <- list()
+# length = dim(precip_raster_future)[3]/12
+# seq = 1:12
+# 
+# for(i in 1:length) {
+#   precip_sub = precip_raster_future[[seq]]
+#   tmin_sub = tmin_raster_future[[seq]]
+#   tmax_sub = tmax_raster_future[[seq]]
+# 
+#   biovar_list[[i]] = biovars(prec = precip_sub,
+#                              tmin = tmin_sub,
+#                              tmax = tmax_sub)
+#   seq = seq + 12
+#   print(seq)
+# }
+# 
+# biovar_avg_combined_future <- raster::brick(nrows = 360, ncols = 720)
+# for(i in 1:19) {
+#   biovar_sublist = lapply(biovar_list, '[[', i) #pulls out each bioclim variable iteratively
+#   biovar_substack = stack(biovar_sublist) #combines all years into a raster stack
   #previous version for annual data
   #biovar_avg = calc(biovar_substack, fun = mean) #Calculates the average for each var
   #biovar_avg_combined_future[[i]] = biovar_avg #binding each averaged layer back into a brick
   #modified for data that are already averaged
-  biovar_avg_combined_future[[i]] = biovar_substack
-}
-
+#   biovar_avg_combined_future[[i]] = biovar_substack
+# }
 
 #saving current data object
 writeRaster(biovar_avg_combined_current, "./data/biovar_avg_combined_current")

@@ -9,53 +9,62 @@ library(raster)
 #Need these bioclim data to run successfully
 ##Environmental Data 
 
-prep_data = function(df = NULL, biovar_current = NULL, biovar_future = NULL) {
+prep_data = function(df = NULL, biovar_master = NULL) {
   #Step 1. Split by time period into two data frames
-  df_current = df %>% 
-    filter(time_frame == "current")
-  df_future = df %>%
-    filter(time_frame == "future")
-  #---------------------------------------------------stopped editing here
-  #Step 2. Inspect the dataframe
-  glimpse(df_t1)
-  glimpse(df_t2)
+  # df_current = df %>%
+  #   filter(time_frame == "current")
+  # df_future = df %>%
+  #   filter(time_frame == "future")
   
-  #Step 3. Generate 10k background points for each one. 
-  bg_t1 = dismo::randomPoints(biovar_t1, 10000)
-  colnames(bg_t1) = c("longitude", "latitude")
+  #Step 1. Create dataframe with all occurence points
+  df_master <- df
+
+  # #Step 2. Inspect the dataframe
+  glimpse(df_master)
+  #glimpse(df_future)
   
-  bg_t2 = randomPoints(biovar_t2, 10000)
-  colnames(bg_t2) = c("longitude", "latitude")
+    #Step 3. Generate 10k background points for each one. 
+  #bg_current <- dismo::randomPoints(biovar_current, 10000)
+  #colnames(bg_current) = c("longitude", "latitude")
+  
+  #bg_future = randomPoints(biovar_future, 10000)
+  #colnames(bg_future) = c("longitude", "latitude")
+  
+  #Step 3. Generate 10k background points
+  bg_master <- dismo::randomPoints(biovar_master, 10000)
+  colnames(bg_master) = c("longitude", "latitude")
   
   #Step. 4 Merging background data and occurence data
-  df_comb_t1 = data.frame(df_t1) %>%
+  df_comb_master = data.frame(df_master) %>%
     mutate(pb = 1) %>%
     dplyr::select(pb, longitude, latitude) %>%
-    bind_rows(data.frame(bg_t1) %>% 
+    bind_rows(data.frame(bg_master) %>% 
                 mutate(pb = 0))  %>%
     mutate(Species = as.integer(pb)) %>%
     dplyr::select(-pb)
   
-  df_comb_t2 = data.frame(df_t2) %>%
-    mutate(pb = 1) %>%
-    dplyr::select(pb, longitude, latitude) %>%
-    bind_rows(data.frame(bg_t2) %>% 
-                mutate(pb = 0)) %>%
-    mutate(Species = as.integer(pb)) %>%
-    dplyr::select(-pb)
+  # df_comb_future = data.frame(df_future) %>%
+  #   mutate(pb = 1) %>%
+  #   dplyr::select(pb, longitude, latitude) %>%
+  #   bind_rows(data.frame(bg_future) %>% 
+  #               mutate(pb = 0)) %>%
+  #   mutate(Species = as.integer(pb)) %>%
+  #   dplyr::select(-pb)
+  # 
+  df_comb <- data.frame()
   
   #Step 5. Changing to a spatial points data frame
-  df_sp_t1 = SpatialPointsDataFrame(df_comb_t1[,c("longitude","latitude")], 
-                                    df_comb_t1, 
+  df_sp_master <- SpatialPointsDataFrame(df_comb_master[,c("longitude","latitude")], 
+                                    df_comb_master, 
                                     proj4string = CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0"))
-  df_sp_t2 = SpatialPointsDataFrame(df_comb_t2[,c("longitude","latitude")], 
-                                   df_comb_t2, 
-                                   proj4string = CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0"))
-  
+  # df_sp_future = SpatialPointsDataFrame(df_comb_future[,c("longitude","latitude")], 
+  #                                  df_comb_future, 
+  #                                  proj4string = CRS("+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0"))
+  # 
   #Converting to a list with the two dataframes
-  prepared_data_list = list(df_sp_t1, df_sp_t2)
+  prepared_data_list = df_sp_master
   prepared_data_list
 }
 
-# #Test
-# prep_st = prep_data(swallowtail)
+#Test
+prep_st = prep_data(monarch)
