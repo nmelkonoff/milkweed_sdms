@@ -77,22 +77,27 @@ bv_current_subulata <- crop(x = bv_current, y = geographic_extent_subulata)
 #crop future environmental data to geographic extent of subulata
 bv_future_subulata <- crop(x = bv_future, y = geographic_extent_subulata)
 
-#using the custom prep_data function to ready the data for blockCV -------this currently isn't working, stopped editing here
+#using the custom prep_data function to ready the data for blockCV
 source("./data prep/prep_data_func.R") 
 
-monarch_prepared_data = prep_data(monarch, df_sp_master)
-hostplant1_prepared_data = prep_data(hostplant_1, bv_t1_hp_1, bv_t2_hp_1)
-hostplant2_prepared_data = prep_data(hostplant_2, bv_t1_hp_2, bv_t2_hp_2)
-hostplant3_prepared_data = prep_data(hostplant_3, bv_t1_hp_3, bv_t2_hp_3)
+monarch_prepared_data <- prep_data(df = monarch, biovar_master = bv_future_monarch)
+subulata_prepared_data <- prep_data(df = subulata, biovar_master = bv_future_subulata)
+  
+#hostplant1_prepared_data = prep_data(hostplant_1, bv_t1_hp_1, bv_t2_hp_1)
+#hostplant2_prepared_data = prep_data(hostplant_2, bv_t1_hp_2, bv_t2_hp_2)
+#hostplant3_prepared_data = prep_data(hostplant_3, bv_t1_hp_3, bv_t2_hp_3)
 
 #Merging all the mini-lists into a large list of dataframes
-prepared_data_master = c(swallowtail_prepared_data, 
-                         hostplant1_prepared_data, 
-                         hostplant2_prepared_data, 
-                         hostplant3_prepared_data)
+prepared_data_master <- c(monarch_prepared_data, subulata_prepared_data)
 
-names(prepared_data_master) = c("st_t1", "st_t2", "hp1_t1", "hp1_t2",
-                                "hp2_t1", "hp2_t2", "hp3_t1", "hp3_t2")
+names(prepared_data_master) = c("monarch", "subulata")
+# prepared_data_master = c(swallowtail_prepared_data, 
+#                          hostplant1_prepared_data, 
+#                          hostplant2_prepared_data, 
+#                          hostplant3_prepared_data)
+
+# names(prepared_data_master) = c("st_t1", "st_t2", "hp1_t1", "hp1_t2",
+#                                 "hp2_t1", "hp2_t2", "hp3_t1", "hp3_t2")
 
 
 # blockCV Train-Test Split for all 4 models ------------------------------------------------
@@ -100,11 +105,12 @@ names(prepared_data_master) = c("st_t1", "st_t2", "hp1_t1", "hp1_t2",
 #
 block_list = list()
 for (i in 1:length(prepared_data_master)) {
-  if (str_detect(names(prepared_data_master[i]), "t1") == TRUE) {
-    raster = bv_t1 
-  } else {
-    raster = bv_t2
-  }
+  # if (str_detect(names(prepared_data_master[i]), "t1") == TRUE) {
+  #   raster = bv_t1 
+  # } else {
+  #   raster = bv_t2
+  # }
+  raster = bv_current
   
   block_list[[i]] = spatialBlock(speciesData = prepared_data_master[[i]],
                                species = "Species",
@@ -123,15 +129,16 @@ for (i in 1:length(prepared_data_master)) {
 saveRDS(block_list, "./data/block_list.rds")
 
 #Getting dataframes to feed into the model (dropping NAs)
-#Swallowtail
+#monarch
 
 model_data_list = list()
 for (i in 1:length(prepared_data_master)) {
-  if (str_detect(names(prepared_data_master[i]), "t1") == TRUE) {
-    raster = bv_t1 
-  } else {
-    raster = bv_t2
-  }
+  # if (str_detect(names(prepared_data_master[i]), "t1") == TRUE) {
+  #   raster = bv_t1 
+  # } else {
+  #   raster = bv_t2
+  # }
+  raster = bv_current
   
   model_data_list[[i]] = raster::extract(raster, prepared_data_master[[i]][,-3], df = TRUE) %>%
     bind_cols(as.data.frame(prepared_data_master[[i]])) %>%
@@ -173,38 +180,38 @@ for (i in 1:length(model_data_list)) {
 str(train_test_data_list)
 
 #Adding on T1, T2 designations
-for (i in 1:length(train_test_data_list)) {
-  for (j in 1:length(train_test_data_list[[i]])) {
-    if (j == 1) {
-      train_test_data_list[[i]][[j]]$time_period = 1
-    } else {
-      train_test_data_list[[i]][[j]]$time_period = 2
-    }
-  }
-}
+# for (i in 1:length(train_test_data_list)) {
+#   for (j in 1:length(train_test_data_list[[i]])) {
+#     if (j == 1) {
+#       train_test_data_list[[i]][[j]]$time_period = 1
+#     } else {
+#       train_test_data_list[[i]][[j]]$time_period = 2
+#     }
+#   }
+# }
 
 # Modeling ----------------------------------------------------------------
 if (Sys.getenv("JAVA_HOME")!="")
   Sys.setenv(JAVA_HOME="")
 library(rJava)
 
-model_func = function(data = NULL) {
-  data_occ = data[[1]] %>%  #Generating occurence lat long
+model_func <- function(data = NULL) { #------------------stopped here --------------------------------------------
+  data_occ <- data[[1]] %>%  #Generating occurence lat long
     filter(Species == 1) %>%
     dplyr::select(longitude, latitude)
   
-  data_bg = data[[1]] %>% #Generating background lat long
+  data_bg <- data[[1]] %>% #Generating background lat long
     filter(Species == 0) %>%
     dplyr::select(longitude, latitude)
   
-  if (data[[1]]$time_period[1] == 1) { #Setting the appropriate environmental layer for the time period
-    env_data = bv_t1
-  } else {
-    env_data = bv_t2
-  }
+  # if (data[[1]]$time_period[1] == 1) { #Setting the appropriate environmental layer for the time period
+  #   env_data = bv_t1
+  # } else {
+  #   env_data = bv_t2
+   
   
   #Running the model
-  eval = ENMevaluate(occ = data_occ, 
+  eval <- ENMevaluate(occ = data_occ, 
                      bg.coords = data_bg,
                      env = env_data,
                      method = 'randomkfold', 
@@ -216,7 +223,7 @@ model_func = function(data = NULL) {
 
 start = Sys.time()
 #Running the model function over the list of data
-big_model_list = lapply(train_test_data_list, model_func)
+big_model_list <- lapply(train_test_data_list, model_func)
 
 #Saving this bad boy
 saveRDS(big_model_list, "./data/big_model_list.rds")
