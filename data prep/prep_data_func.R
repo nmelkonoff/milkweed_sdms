@@ -9,7 +9,7 @@ library(raster)
 #Need these bioclim data to run successfully
 ##Environmental Data 
 
-prep_data = function(df = NULL, biovar_master = NULL) {
+prep_data = function(df = NULL, biovar_master = NULL, num_points = 10000) {
   #Step 1. Split by time period into two data frames
   # df_current = df %>%
   #   filter(time_frame == "current")
@@ -20,7 +20,7 @@ prep_data = function(df = NULL, biovar_master = NULL) {
   df_master <- df
 
   # #Step 2. Inspect the dataframe
-  glimpse(df_master)
+  #glimpse(df_master)
   #glimpse(df_future)
   
     #Step 3. Generate 10k background points for each one. 
@@ -31,7 +31,7 @@ prep_data = function(df = NULL, biovar_master = NULL) {
   #colnames(bg_future) = c("longitude", "latitude")
   
   #Step 3. Generate 10k background points
-  bg_master <- dismo::randomPoints(biovar_master, 10000)
+  bg_master <- dismo::randomPoints(biovar_master, n = num_points)
   colnames(bg_master) = c("longitude", "latitude")
   
   #Step. 4 Merging background data and occurence data
@@ -51,7 +51,7 @@ prep_data = function(df = NULL, biovar_master = NULL) {
   #   mutate(Species = as.integer(pb)) %>%
   #   dplyr::select(-pb)
   # 
-  df_comb <- data.frame()
+  #df_comb <- data.frame()
   
   #Step 5. Changing to a spatial points data frame
   df_sp_master <- SpatialPointsDataFrame(df_comb_master[,c("longitude","latitude")], 
@@ -63,8 +63,8 @@ prep_data = function(df = NULL, biovar_master = NULL) {
   # 
   #Converting to a list with the two dataframes
   prepared_data_list = df_sp_master
-  prepared_data_list
+  return(prepared_data_list)
 }
 
 #Test
-prep_st = prep_data(monarch)
+#prep_st = prep_data(monarch)
