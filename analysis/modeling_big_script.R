@@ -132,7 +132,7 @@ asperula_prepared_data <- prep_data(df = asperula, biovar_master = bv_future_asp
 angustifolia_prepared_data <- prep_data(df = angustifolia, biovar_master = bv_future_angustifolia)
 linaria_prepared_data <- prep_data(df = linaria, biovar_master = bv_future_linaria)
 
-
+#--------------------------------------------------------------------------stopped here w/ editing for additional species
 #hostplant1_prepared_data = prep_data(hostplant_1, bv_t1_hp_1, bv_t2_hp_1)
 #hostplant2_prepared_data = prep_data(hostplant_2, bv_t1_hp_2, bv_t2_hp_2)
 #hostplant3_prepared_data = prep_data(hostplant_3, bv_t1_hp_3, bv_t2_hp_3)
