@@ -25,6 +25,22 @@ monarch <- monarch[,-1] %>%
 subulata <- read_csv("./data/subulata_data.csv") %>%
   dplyr::select(-1, longitude, latitude, date)
 
+#asperula
+asperula <- read.csv("./data/asperula_data.csv") %>%
+  dplyr::select(-1, longitude, latitude, date)
+
+#angustifolia
+angustifolia <- read_csv("./data/angustifolia_data.csv") %>%
+  dplyr::select(-1, longitude, latitude, date)
+
+#linaria
+linaria <- read_csv("./data/linaria_data.csv") %>%
+  dplyr::select(-1, longitude, latitude, date)
+
+#erosa
+erosa <- read_csv("./data/erosa_data.csv") %>%
+  dplyr::select(-1, longitude, latitude, date)
+
 #importing environmental data
 bv_current <- raster::brick("./data/biovar_avg_combined_current.gri")
 bv_future <- raster::brick("./data/wc2.1_2.5m_bioc_GFDL-ESM4_ssp126_2021-2040.tif")
@@ -58,10 +74,12 @@ get_extent <- function(species_data = NULL) {
   return(geographic_extent)
 }
 
-geographic_extent_monarch = get_extent(monarch)
-geographic_extent_subulata = get_extent(subulata)
-#geographic_extent_hp_2 = get_extent(hostplant_2)
-#geographic_extent_hp_3 = get_extent(hostplant_3)
+geographic_extent_monarch <- get_extent(monarch)
+geographic_extent_subulata <- get_extent(subulata)
+geographic_extent_asperula <- get_extent(asperula)
+geographic_extent_angustifolia <- get_extent(angustifolia)
+geographic_extent_linaria <- get_extent(linaria)
+geographic_extent_erosa <- get_extent(erosa)
 
 # Crop current environmental data to geographic extent of monarchs
 bv_current_monarch <- crop(x = bv_current, y = geographic_extent_monarch)
@@ -77,12 +95,44 @@ bv_current_subulata <- crop(x = bv_current, y = geographic_extent_subulata)
 #crop future environmental data to geographic extent of subulata
 bv_future_subulata <- crop(x = bv_future, y = geographic_extent_subulata)
 
+# Crop current environmental data to geographic extent of asperula
+bv_current_asperula <- crop(x = bv_current, y = geographic_extent_asperula)
+#bv_t2_hp_1 <- crop(x = bv_t2, y = geographic_extent_hp_1)
+
+#crop future environmental data to geographic extent of asperula
+bv_future_asperula <- crop(x = bv_future, y = geographic_extent_asperula)
+
+# Crop current environmental data to geographic extent of angustifolia
+bv_current_angustifolia <- crop(x = bv_current, y = geographic_extent_angustifolia)
+#bv_t2_hp_1 <- crop(x = bv_t2, y = geographic_extent_hp_1)
+
+#crop future environmental data to geographic extent of angustifolia
+bv_future_angustifolia <- crop(x = bv_future, y = geographic_extent_angustifolia)
+
+# Crop current environmental data to geographic extent of linaria
+bv_current_linaria <- crop(x = bv_current, y = geographic_extent_linaria)
+#bv_t2_hp_1 <- crop(x = bv_t2, y = geographic_extent_hp_1)
+
+#crop future environmental data to geographic extent of linaria
+bv_future_linaria <- crop(x = bv_future, y = geographic_extent_linaria)
+
+# Crop current environmental data to geographic extent of erosa
+bv_current_erosa <- crop(x = bv_current, y = geographic_extent_erosa)
+#bv_t2_hp_1 <- crop(x = bv_t2, y = geographic_extent_hp_1)
+
+#crop future environmental data to geographic extent of erosa
+bv_future_erosa <- crop(x = bv_future, y = geographic_extent_erosa)
+
 #using the custom prep_data function to ready the data for blockCV
 source("./data prep/prep_data_func.R") 
 
 monarch_prepared_data <- prep_data(df = monarch, biovar_master = bv_future_monarch)
 subulata_prepared_data <- prep_data(df = subulata, biovar_master = bv_future_subulata)
-  
+asperula_prepared_data <- prep_data(df = asperula, biovar_master = bv_future_asperula)
+angustifolia_prepared_data <- prep_data(df = angustifolia, biovar_master = bv_future_angustifolia)
+linaria_prepared_data <- prep_data(df = linaria, biovar_master = bv_future_linaria)
+
+
 #hostplant1_prepared_data = prep_data(hostplant_1, bv_t1_hp_1, bv_t2_hp_1)
 #hostplant2_prepared_data = prep_data(hostplant_2, bv_t1_hp_2, bv_t2_hp_2)
 #hostplant3_prepared_data = prep_data(hostplant_3, bv_t1_hp_3, bv_t2_hp_3)
