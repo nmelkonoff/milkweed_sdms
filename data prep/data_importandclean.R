@@ -289,3 +289,9 @@ writeRaster(biovar_avg_combined_current, "./data/biovar_avg_combined_current")
 write.csv(monarch_df, "./data/monarch_data.csv")
 
 write.csv(subulata_df, "./data/subulata_data.csv")
+
+write.csv(asperula_df, "./data/asperula_data.csv")
+
+write.csv(angustifolia_df, "./data/angustifolia_data.csv")
+
+write.csv(linaria_df, "./data/linaria_data.csv")
