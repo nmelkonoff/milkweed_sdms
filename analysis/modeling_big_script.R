@@ -195,7 +195,7 @@ if (Sys.getenv("JAVA_HOME")!="")
   Sys.setenv(JAVA_HOME="")
 library(rJava)
 
-model_func <- function(data = NULL) { #------------------stopped here --------------------------------------------
+model_func <- function(data = NULL, env_data = NULL) {
   data_occ <- data[[1]] %>%  #Generating occurence lat long
     filter(Species == 1) %>%
     dplyr::select(longitude, latitude)
@@ -208,6 +208,8 @@ model_func <- function(data = NULL) { #------------------stopped here ----------
   #   env_data = bv_t1
   # } else {
   #   env_data = bv_t2
+  
+#env_data <- bv_current
    
   
   #Running the model
@@ -215,15 +217,20 @@ model_func <- function(data = NULL) { #------------------stopped here ----------
                      bg.coords = data_bg,
                      env = env_data,
                      method = 'randomkfold', 
-                     kfolds = 5, 
+                     #kfolds = 5, #for older versions of package
+                     partition.settings = list(kfolds = 5),
                      algorithm = 'maxent.jar', 
-                     fc = c("L", "LQ", "H", "LQH", "QH", "LH"))
-  eval
+                     tune.args = list(fc = c("L", "LQ", "H", "LQH", "QH", "LH"), rm = 1:5))
+                     #fc = c("L", "LQ", "H", "LQH", "QH", "LH"),
+                     
+  return(eval)
 }
+#test on one dataset
+#one_model <- model_func(data = train_test_data_list[[2]], env_data = bv_current)
 
 start = Sys.time()
-#Running the model function over the list of data
-big_model_list <- lapply(train_test_data_list, model_func)
+#Running the model function over the list of data -- this takes a long time!
+big_model_list <- lapply(train_test_data_list, model_func, env_data = bv_current)
 
 #Saving this bad boy
 saveRDS(big_model_list, "./data/big_model_list.rds")
@@ -233,20 +240,20 @@ end = Sys.time()
 
 #Function to build set of evaluation plots - just plug in the appropriate eval model object from above
 
-eval_plots = function(eval_object = NULL) {
+eval_plots <- function(eval_object = NULL, stats = NULL) {
   par(mfrow=c(2,3))
-  eval.plot(eval_object@results)
-  eval.plot(eval_object@results, 'avg.test.AUC', legend = F)
-  eval.plot(eval_object@results, 'avg.diff.AUC', legend = F)
-  eval.plot(eval_object@results, 'avg.test.or10pct', legend = F)
-  eval.plot(eval_object@results, 'avg.test.orMTP', legend = F)
+  evalplot.stats(e = eval_object@results)
+  evalplot.stats(e = eval_object@results, stats = "avg.test.AUC", legend = F)
+  evalplot.stats(e = eval_object@results, stats = 'avg.diff.AUC', legend = F)
+  evalplot.stats(e = eval_object@results, stats = 'avg.test.or10pct', legend = F)
+  evalplot.stats(e = eval_object@results, stats = 'avg.test.orMTP', legend = F)
   plot(eval_object@results$avg.test.AUC, eval_object@results$delta.AICc, bg=factor(eval_object@results$features), pch=21, cex= eval_object@results$rm/2, xlab = "avg.test.AUC", ylab = 'delta.AICc', cex.lab = 1.5)
   legend("topright", legend=unique(eval_object@results$features), pt.bg=factor(eval_object@results$features), pch=21)
   mtext("Circle size proportional to regularization multiplier value", cex = 0.6)
 }
 
 
-#Evaluation plots
+#Evaluation plots ------------------------this isn't working currently, skipped for now
 #Feed in a list of models and it outputs and saves the evaluation plots for each one
 for (i in 1:length(big_model_list)) {
   name = paste("eval_plot", i, sep = "_")
@@ -259,13 +266,14 @@ for (i in 1:length(big_model_list)) {
 #Picking the best model based on highest AUC for each set
 #Pulling out indices of the "best" model based on AUC scores - if there are two models that are equal, it pulls the first.
 
-model_selection_index_list = list()
+model_selection_index_list <- list()
 
 for (i in 1:length(big_model_list)) {
   model_selection_index_list[[i]] = as.numeric(row.names(big_model_list[[i]]@results[which(big_model_list[[i]]@results$avg.test.AUC== max(big_model_list[[i]]@results$avg.test.AUC)),]))[1]
 }
 
-best_model_list = list()
+best_model_list <- list()
+
 for (i in 1:length(big_model_list)) {
   index = model_selection_index_list[[i]]
   model = big_model_list[[i]]@models[[index]]
@@ -274,7 +282,7 @@ for (i in 1:length(big_model_list)) {
 
 #combining models and data into a master list
 
-master_list = list()
+master_list <- list()
 for (i in 1:length(train_test_data_list)) {
   master_list[[i]] = append(train_test_data_list[[i]], best_model_list[[i]])
 }
@@ -302,24 +310,11 @@ for (i in 1:length(train_test_data_list)) {
 # }
 
 
-names(master_list) = c("st_t1", 
-                           "st_t2", 
-                           "hp_1_t1", 
-                           "hp_1_t2", 
-                           "hp_2_t1", 
-                           "hp_2_t2", 
-                           "hp_3_t1", 
-                           "hp_3_t2")
+names(master_list) <- c("monarch", 
+                           "subulata")
 
-names_list = c("bv_t1_st", 
-               "bv_t2_st", 
-               "bv_t1_hp_1", 
-               "bv_t2_hp_1", 
-               "bv_t1_hp_2", 
-               "bv_t2_hp_2", 
-               "bv_t1_hp_3", 
-               "bv_t2_hp_3")
-
+names_list <- c("bv_current_monarch", 
+               "bv_current_subulata")
 
 evaluations = list()
 for(i in 1:length(master_list)) {
@@ -348,11 +343,11 @@ saveRDS(evaluations, file = "./data/evaluations.rds")
 # Selecting Final Models and Running on All Data --------------------------
 #Let's build final models
 
-full_model = function(models = NULL, full_data = NULL, best_model_index = NULL, name = NULL, env_data_t1 = NULL, env_data_t2 = NULL) {
-  auc_mod = models@results[best_model_index,]
-  FC_best = as.character(auc_mod$features[1])
-  rm_best = auc_mod$rm
-  maxent.args = ENMeval::make.args(RMvalues = rm_best, fc = FC_best)
+full_model <- function(models = NULL, full_data = NULL, best_model_index = NULL, name = NULL, env_data_t1 = NULL, env_data_t2 = NULL) {
+  auc_mod <- models@results[best_model_index,]
+  FC_best <- as.character(auc_mod$features[1])
+  rm_best <- auc_mod$rm
+  maxent.args <- ENMeval::make.args(RMvalues = rm_best, fc = FC_best)
   
   if (full_data$time_frame[1] == "T1") {
     env_data = env_data_t1
