@@ -295,3 +295,5 @@ write.csv(asperula_df, "./data/asperula_data.csv")
 write.csv(angustifolia_df, "./data/angustifolia_data.csv")
 
 write.csv(linaria_df, "./data/linaria_data.csv")
+
+write.csv(erosa_df, "./data/erosa_data.csv")
