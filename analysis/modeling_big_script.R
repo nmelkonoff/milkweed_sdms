@@ -286,6 +286,8 @@ big_model_list <- lapply(train_test_data_list, model_func, env_data = bv_current
 saveRDS(big_model_list, "./data/big_model_list.rds")
 
 end = Sys.time()
+
+big_model_list <- readRDS(file = "./data/big_model_list.rds") #use this to load in models
 # Model Evaluation --------------------------------------------------------
 
 #Function to build set of evaluation plots - just plug in the appropriate eval model object from above
@@ -319,6 +321,7 @@ for (i in 1:length(big_model_list)) {
 model_selection_index_list <- list()
 
 for (i in 1:length(big_model_list)) {
+  cat("Finding best AUC for dataset", i)
   model_selection_index_list[[i]] = as.numeric(row.names(big_model_list[[i]]@results[which(big_model_list[[i]]@results$avg.test.AUC== max(big_model_list[[i]]@results$avg.test.AUC)),]))[1]
 }
 
