@@ -178,10 +178,12 @@ for (i in 1:length(prepared_data_master)) {
 #Saving Spatial CV splits - these actually take a surprising amount of time to run, and are necessary building blocks for threshold maps in the figures script
 saveRDS(block_list, "./data/block_list.rds")
 
+block_list <- readRDS(file = "./data/block_list.rds") #use this to load in block_list
+
 #Getting dataframes to feed into the model (dropping NAs)
 #monarch
 
-model_data_list = list()
+model_data_list <- list()
 for (i in 1:length(prepared_data_master)) {
   # if (str_detect(names(prepared_data_master[i]), "t1") == TRUE) {
   #   raster = bv_t1 
@@ -197,13 +199,13 @@ for (i in 1:length(prepared_data_master)) {
 }
 
 #vectors of presence-background
-pb_list = lapply(prepared_data_master,  function(x) '['(x, 3))
+pb_list <- lapply(prepared_data_master,  function(x) '['(x, 3))
 
 #folds for each model
-fold_list = lapply(block_list, function(x) '[['(x, 1))
+fold_list <- lapply(block_list, function(x) '[['(x, 1))
 
 #Writing a function that unlists and combines all training and test indices for each species-time period combination
-extract_index = function(list_of_folds = NULL) {
+extract_index <- function(list_of_folds = NULL) {
 for(k in 1:length(list_of_folds)){
   train_index <- unlist(list_of_folds[[k]][1]) # extract the training set indices
   test_index <- unlist(list_of_folds[[k]][2])# extract the test set indices
@@ -213,9 +215,9 @@ for(k in 1:length(list_of_folds)){
 }
 
 #Applying the function to the list of folds
-train_test_index_list = lapply(fold_list, extract_index)
+train_test_index_list <- lapply(fold_list, extract_index)
 
-train_test_data_list = list()
+train_test_data_list <- list()
 for (i in 1:length(model_data_list)) {
     train_index = train_test_index_list[[i]][[1]]
     test_index = train_test_index_list[[i]][[2]]
@@ -291,15 +293,16 @@ big_model_list <- readRDS(file = "./data/big_model_list.rds") #use this to load 
 # Model Evaluation --------------------------------------------------------
 
 #Function to build set of evaluation plots - just plug in the appropriate eval model object from above
+#updated these to more recent "stats" values but still not working
 
 eval_plots <- function(eval_object = NULL, stats = NULL) {
   par(mfrow=c(2,3))
-  evalplot.stats(e = eval_object@results)
-  evalplot.stats(e = eval_object@results, stats = "avg.test.AUC", legend = F)
-  evalplot.stats(e = eval_object@results, stats = 'avg.diff.AUC', legend = F)
-  evalplot.stats(e = eval_object@results, stats = 'avg.test.or10pct', legend = F)
-  evalplot.stats(e = eval_object@results, stats = 'avg.test.orMTP', legend = F)
-  plot(eval_object@results$avg.test.AUC, eval_object@results$delta.AICc, bg=factor(eval_object@results$features), pch=21, cex= eval_object@results$rm/2, xlab = "avg.test.AUC", ylab = 'delta.AICc', cex.lab = 1.5)
+  #evalplot.stats(e = eval_object@results)
+  evalplot.stats(e = eval_object@results, stats = "auc.val.avg", legend = F)
+  evalplot.stats(e = eval_object@results, stats = "auc.diff.avg", legend = F)
+  evalplot.stats(e = eval_object@results, stats = "or.10p.avg", legend = F)
+  evalplot.stats(e = eval_object@results, stats = "or.mtp.avg", legend = F)
+  plot(eval_object@results$auc.val.avg, eval_object@results$delta.AICc, bg=factor(eval_object@results$features), pch=21, cex= eval_object@results$rm/2, xlab = "auc.val.avg", ylab = 'delta.AICc', cex.lab = 1.5)
   legend("topright", legend=unique(eval_object@results$features), pt.bg=factor(eval_object@results$features), pch=21)
   mtext("Circle size proportional to regularization multiplier value", cex = 0.6)
 }
@@ -322,7 +325,7 @@ model_selection_index_list <- list()
 
 for (i in 1:length(big_model_list)) {
   cat("Finding best AUC for dataset", i)
-  model_selection_index_list[[i]] = as.numeric(row.names(big_model_list[[i]]@results[which(big_model_list[[i]]@results$avg.test.AUC== max(big_model_list[[i]]@results$avg.test.AUC)),]))[1]
+  model_selection_index_list[[i]] = as.numeric(row.names(big_model_list[[i]]@results[which(big_model_list[[i]]@results$auc.val.avg == max(big_model_list[[i]]@results$auc.val.avg)),]))[1]
 }
 
 best_model_list <- list()
@@ -369,7 +372,7 @@ names(master_list) <- c("monarch",
 names_list <- c("bv_current_monarch", 
                "bv_current_subulata")
 
-evaluations = list()
+evaluations <- list()
 for(i in 1:length(master_list)) {
   test_data_occ = master_list[[i]][[2]] %>%
     filter(Species == 1) %>%
@@ -396,55 +399,67 @@ saveRDS(evaluations, file = "./data/evaluations.rds")
 # Selecting Final Models and Running on All Data --------------------------
 #Let's build final models
 
-full_model <- function(models = NULL, full_data = NULL, best_model_index = NULL, name = NULL, env_data_t1 = NULL, env_data_t2 = NULL) {
+source("./make.args.R")
+
+full_model <- function(models = NULL, full_data = NULL, best_model_index = NULL, name = NULL, env_data = NULL) {
   auc_mod <- models@results[best_model_index,]
   FC_best <- as.character(auc_mod$features[1])
   rm_best <- auc_mod$rm
-  maxent.args <- ENMeval::make.args(RMvalues = rm_best, fc = FC_best)
+  #maxent.args <- ENMeval::make.args(RMvalues = rm_best, fc = FC_best)
+  maxent.args <- make.args(RMvalues = rm_best, fc = FC_best)
   
-  if (full_data$time_frame[1] == "T1") {
-    env_data = env_data_t1
-  } else {
-    env_data = env_data_t2
-  }
+  # if (full_data$time_frame[1] == "T1") {
+  #   env_data = env_data_t1
+  # } else {
+  #   env_data = env_data_t2
+  # }
+  
+  env_data = bv_current
   
   full_mod = maxent(env_data, as.matrix(full_data[,1:2]), args = maxent.args[[1]])
   saveRDS(full_mod, paste0("./data/", name, ".rds" ))
   
-  full_mod
+  return(full_mod)
 }
 
 # As of 2020-12-21, this includes cropped versions of env vars
 #Creating each master model
-swallowtail_t1 = full_model(models = big_model_list[[1]], best_model_index = model_selection_index_list[[1]], 
-           full_data = swallowtail %>% filter(time_frame == "T1"), name = "swallowtail_t1", 
-           env_data_t1 = bv_t1_st, env_data_t2 = bv_t2_st)
 
-swallowtail_t2 = full_model(models = big_model_list[[2]], best_model_index = model_selection_index_list[[2]], 
-                            full_data = swallowtail %>% filter(time_frame == "T2"), name = "swallowtail_t2", 
-                            env_data_t1 = bv_t1_st, env_data_t2 = bv_t2_st)
+monarch_current <- full_model(models = big_model_list[[1]], best_model_index = model_selection_index_list[[1]],
+                              full_data = monarch, name = "monarch_current", env_data = bv_current_monarch)
 
-hostplant_1_t1 = full_model(models = big_model_list[[3]], best_model_index = model_selection_index_list[[3]], 
-                            full_data = hostplant_1[,-1] %>% filter(time_frame == "T1"), name = "hostplant_1_t1", 
-                            env_data_t1 = bv_t1_hp_1, env_data_t2 = bv_t2_hp_1)
+subulata_current <- full_model(models = big_model_list[[2]], best_model_index = model_selection_index_list[[2]],
+                               full_data = subulata, name = "subulata_current", env_data = bv_current_subulata)
+# 
+# swallowtail_t1 = full_model(models = big_model_list[[1]], best_model_index = model_selection_index_list[[1]],
+#            full_data = swallowtail %>% filter(time_frame == "T1"), name = "swallowtail_t1",
+#            env_data_t1 = bv_t1_st, env_data_t2 = bv_t2_st)
+# 
+# swallowtail_t2 = full_model(models = big_model_list[[2]], best_model_index = model_selection_index_list[[2]],
+#                             full_data = swallowtail %>% filter(time_frame == "T2"), name = "swallowtail_t2",
+#                             env_data_t1 = bv_t1_st, env_data_t2 = bv_t2_st)
 
-hostplant_1_t2 = full_model(models = big_model_list[[4]], best_model_index = model_selection_index_list[[4]], 
-                            full_data = hostplant_1[,-1] %>% filter(time_frame == "T2"), name = "hostplant_1_t2", 
-                            env_data_t1 = bv_t1_hp_1, env_data_t2 = bv_t2_hp_1)
-
-hostplant_2_t1 = full_model(models = big_model_list[[5]], best_model_index = model_selection_index_list[[5]], 
-                            full_data = hostplant_2[,-1] %>% filter(time_frame == "T1"), name = "hostplant_2_t1", 
-                            env_data_t1 = bv_t1_hp_2, env_data_t2 = bv_t2_hp_2)
-
-hostplant_2_t2 = full_model(models = big_model_list[[6]], best_model_index = model_selection_index_list[[6]], 
-                            full_data = hostplant_2[,-1] %>% filter(time_frame == "T2"), name = "hostplant_2_t2", 
-                            env_data_t1 = bv_t1_hp_2, env_data_t2 = bv_t2_hp_2)
-
-hostplant_3_t1 = full_model(models = big_model_list[[7]], best_model_index = model_selection_index_list[[7]], 
-                            full_data = hostplant_3[,-1] %>% filter(time_frame == "T1"), name = "hostplant_3_t1", 
-                            env_data_t1 = bv_t1_hp_3, env_data_t2 = bv_t2_hp_3)
-
-hostplant_3_t2 = full_model(models = big_model_list[[8]], best_model_index = model_selection_index_list[[8]], 
-                            full_data = hostplant_3[,-1] %>% filter(time_frame == "T2"), name = "hostplant_3_t2", 
-                            env_data_t1 = bv_t1_hp_3, env_data_t2 = bv_t2_hp_3)
+# hostplant_1_t1 = full_model(models = big_model_list[[3]], best_model_index = model_selection_index_list[[3]], 
+#                             full_data = hostplant_1[,-1] %>% filter(time_frame == "T1"), name = "hostplant_1_t1", 
+#                             env_data_t1 = bv_t1_hp_1, env_data_t2 = bv_t2_hp_1)
+# 
+# hostplant_1_t2 = full_model(models = big_model_list[[4]], best_model_index = model_selection_index_list[[4]], 
+#                             full_data = hostplant_1[,-1] %>% filter(time_frame == "T2"), name = "hostplant_1_t2", 
+#                             env_data_t1 = bv_t1_hp_1, env_data_t2 = bv_t2_hp_1)
+# 
+# hostplant_2_t1 = full_model(models = big_model_list[[5]], best_model_index = model_selection_index_list[[5]], 
+#                             full_data = hostplant_2[,-1] %>% filter(time_frame == "T1"), name = "hostplant_2_t1", 
+#                             env_data_t1 = bv_t1_hp_2, env_data_t2 = bv_t2_hp_2)
+# 
+# hostplant_2_t2 = full_model(models = big_model_list[[6]], best_model_index = model_selection_index_list[[6]], 
+#                             full_data = hostplant_2[,-1] %>% filter(time_frame == "T2"), name = "hostplant_2_t2", 
+#                             env_data_t1 = bv_t1_hp_2, env_data_t2 = bv_t2_hp_2)
+# 
+# hostplant_3_t1 = full_model(models = big_model_list[[7]], best_model_index = model_selection_index_list[[7]], 
+#                             full_data = hostplant_3[,-1] %>% filter(time_frame == "T1"), name = "hostplant_3_t1", 
+#                             env_data_t1 = bv_t1_hp_3, env_data_t2 = bv_t2_hp_3)
+# 
+# hostplant_3_t2 = full_model(models = big_model_list[[8]], best_model_index = model_selection_index_list[[8]], 
+#                             full_data = hostplant_3[,-1] %>% filter(time_frame == "T2"), name = "hostplant_3_t2", 
+#                             env_data_t1 = bv_t1_hp_3, env_data_t2 = bv_t2_hp_3)
 
