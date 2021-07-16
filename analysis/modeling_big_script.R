@@ -425,6 +425,14 @@ full_model <- function(models = NULL, full_data = NULL, best_model_index = NULL,
 # As of 2020-12-21, this includes cropped versions of env vars
 #Creating each master model
 
+models <- big_model_list[[1]]
+best_model_index <- model_selection_index_list[[1]]
+auc_mod <- models@results[best_model_index,]
+FC_best <- as.character(auc_mod$features[1])
+rm_best <- auc_mod$rm
+FC_best
+rm_best # Stop here and send the output
+
 monarch_current <- full_model(models = big_model_list[[1]], best_model_index = model_selection_index_list[[1]],
                               full_data = monarch, name = "monarch_current", env_data = bv_current_monarch)
 
