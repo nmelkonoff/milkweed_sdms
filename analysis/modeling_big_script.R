@@ -297,7 +297,7 @@ big_model_list <- readRDS(file = "./data/big_model_list.rds") #use this to load 
 
 eval_plots <- function(eval_object = NULL, stats = NULL) {
   par(mfrow=c(2,3))
-  #evalplot.stats(e = eval_object@results)
+  evalplot.stats(e = eval_object@results)
   evalplot.stats(e = eval_object@results, stats = "auc.val.avg", legend = F)
   evalplot.stats(e = eval_object@results, stats = "auc.diff.avg", legend = F)
   evalplot.stats(e = eval_object@results, stats = "or.10p.avg", legend = F)
@@ -396,7 +396,14 @@ for(i in 1:length(master_list)) {
 #Saving evaluations
 saveRDS(evaluations, file = "./data/evaluations.rds")
 
-# Selecting Final Models and Running on All Data --------------------------
+#identify best model using maximized AUC as optimality criterion
+best_monarch <- which(big_model_list[[1]]@results$auc.val.avg == max(big_model_list[[1]]@results$auc.val.avg))
+saveRDS(big_model_list[[1]]@models[best_monarch], file = "./data/monarch_current.rds")
+
+best_subulata <- which(big_model_list[[2]]@results$auc.val.avg == max(big_model_list[[2]]@results$auc.val.avg))
+saveRDS(big_model_list[[2]]@models[best_monarch], file = "./data/subulata_current.rds")
+
+# Selecting Final Models and Running on All Data -------------------------- 
 #Let's build final models
 
 source("./make.args.R")
@@ -425,13 +432,14 @@ full_model <- function(models = NULL, full_data = NULL, best_model_index = NULL,
 # As of 2020-12-21, this includes cropped versions of env vars
 #Creating each master model
 
-models <- big_model_list[[1]]
-best_model_index <- model_selection_index_list[[1]]
-auc_mod <- models@results[best_model_index,]
-FC_best <- as.character(auc_mod$features[1])
-rm_best <- auc_mod$rm
-FC_best
-rm_best # Stop here and send the output
+#Jeff test
+# models <- big_model_list[[1]]
+# best_model_index <- model_selection_index_list[[1]]
+# auc_mod <- models@results[best_model_index,]
+# FC_best <- as.character(auc_mod$features[1])
+# rm_best <- auc_mod$rm
+# FC_best
+# rm_best # Stop here and send the output
 
 monarch_current <- full_model(models = big_model_list[[1]], best_model_index = model_selection_index_list[[1]],
                               full_data = monarch, name = "monarch_current", env_data = bv_current_monarch)
