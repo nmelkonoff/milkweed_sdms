@@ -62,35 +62,41 @@ monarch <- monarch[,-1] %>%
   dplyr::select(longitude, latitude, date)
 
 #subulata
-subulata <- read_csv("./data/subulata_data.csv") %>%
-  dplyr::select(-1, longitude, latitude, date)
-
+subulata <- read_csv("./data/subulata_data.csv")
+subulata <- subulata[,-1] %>%
+  dplyr::select(longitude, latitude, date)
+  
 #asperula
-asperula <- read.csv("./data/asperula_data.csv") %>%
-  dplyr::select(-1, longitude, latitude, date)
+asperula <- read.csv("./data/asperula_data.csv")
+asperula <- asperula[,-1] %>%
+  dplyr::select(longitude, latitude, date)
+  
+  #dplyr::select(-1, longitude, latitude, date) #not exactly sure why this isn't the same as above, but it's not
 
 #angustifolia
-angustifolia <- read_csv("./data/angustifolia_data.csv") %>%
-  dplyr::select(-1, longitude, latitude, date)
+angustifolia <- read_csv("./data/angustifolia_data.csv")
+angustifolia <- angustifolia[,-1] %>%
+  dplyr::select(longitude, latitude, date)
 
 #linaria
-linaria <- read_csv("./data/linaria_data.csv") %>%
-  dplyr::select(-1, longitude, latitude, date)
+linaria <- read_csv("./data/linaria_data.csv") 
+linaria <- linaria[,-1] %>%
+  dplyr::select(longitude, latitude, date)
 
 #erosa
-erosa <- read_csv("./data/erosa_data.csv") %>%
-  dplyr::select(-1, longitude, latitude, date)
+erosa <- read_csv("./data/erosa_data.csv")
+erosa <- erosa [,-1] %>%
+  dplyr::select(longitude, latitude, date)
 
 #importing environmental data
 bv_current <- raster::brick("./data/biovar_avg_combined_current.gri")
 bv_future <- raster::brick("./data/wc2.1_2.5m_bioc_GFDL-ESM4_ssp126_2021-2040.tif")
 
-
 # #importing swallowtail, hostplant and environmental data
 # #butterfly
-swallowtail = read_csv("./data/swallowtail_data.csv")
-swallowtail = swallowtail[,-1] %>%
-   dplyr::select(longitude, latitude, date, year, time_frame)
+# swallowtail = read_csv("./data/swallowtail_data.csv")
+# swallowtail = swallowtail[,-1] %>%
+#    dplyr::select(longitude, latitude, date, year, time_frame)
 # 
 # hp = read_csv("./data/raw_data/hostplant_data.csv") %>%
 #   dplyr::select(-1, longitude, latitude, date, year, time_frame)
@@ -218,15 +224,18 @@ bv_future_erosa <- crop(x = bv_future, y = geographic_extent_erosa)
 # geographic.extent <- extent(x = c(min_lon_swallowtail, max_lon_swallowtail, min_lat_swallowtail, max_lat_swallowtail))
 
 
-#Loading in model objects -----------------------------------figure out which script these are being saved in
-mx_best_st_t1 = readRDS("./data/swallowtail_t1.rds")
-mx_best_st_t2 = readRDS("./data/swallowtail_t2.rds")
-mx_best_hp_1_t1 = readRDS("./data/hostplant_1_t1.rds")
-mx_best_hp_1_t2 = readRDS("./data/hostplant_1_t2.rds")
-mx_best_hp_2_t1 = readRDS("./data/hostplant_2_t1.rds")
-mx_best_hp_2_t2 = readRDS("./data/hostplant_2_t2.rds")
-mx_best_hp_3_t1 = readRDS("./data/hostplant_3_t1.rds")
-mx_best_hp_3_t2 = readRDS("./data/hostplant_3_t2.rds")
+#Loading in model objects -----------------------------------
+# mx_best_st_t1 = readRDS("./data/swallowtail_t1.rds")
+# mx_best_st_t2 = readRDS("./data/swallowtail_t2.rds")
+# mx_best_hp_1_t1 = readRDS("./data/hostplant_1_t1.rds")
+# mx_best_hp_1_t2 = readRDS("./data/hostplant_1_t2.rds")
+# mx_best_hp_2_t1 = readRDS("./data/hostplant_2_t1.rds")
+# mx_best_hp_2_t2 = readRDS("./data/hostplant_2_t2.rds")
+# mx_best_hp_3_t1 = readRDS("./data/hostplant_3_t1.rds")
+# mx_best_hp_3_t2 = readRDS("./data/hostplant_3_t2.rds")
+
+model_best_monarch_current <- readRDS("./data/monarch_current.rds")
+model_best_subulata_current <- readRDS("./data/subulata_current.rds")
 
 # Geographic Mapping Data ---------------------------------------
 
@@ -235,10 +244,17 @@ mx_best_hp_3_t2 = readRDS("./data/hostplant_3_t2.rds")
 usa <- getData(country = 'USA', level = 1)
 
 #extract states (need to uppercase everything)
-to_remove <- c("Alaska", "Hawaii", "North Dakota", "South Dakota", "Montana", 
-              "Wyoming", "Idaho", "Washington", "Oregon", "Nevada", "California", 
-              "Arizona", "Utah", "New Mexico", "Colorado", "Nebraska", "Texas", 
-              "Oklahoma", "Kansas")
+to_remove <- c("Alaska", "Hawaii", "Texas", "Oklahoma", "Kansas", "Nebraska", "South Dakota", 
+               "North Dakota", "Minnesota", "Iowa", "Missouri", "Wisconsin", "Illinois", "Arkansas",
+               "Louisiana", "Mississippi", "Alabama", "Tennessee", "Georgia", "Kentucky", "Indiana",
+               "Michigan", "Ohio", "West Virginia", "Virginia", "North Carolina", "South Carolina", 
+               "Florida", "Maine", "Vermont", "Massachusetts", "Rhode Island", "Connecticut", "New Jersey",
+               "Delaware", "Maryland", "New York", "Pennsylvania", "New Hampshire")
+               
+# to_remove <- c("Alaska", "Hawaii", "North Dakota", "South Dakota", "Montana",
+#               "Wyoming", "Idaho", "Washington", "Oregon", "Nevada", "California",
+#               "Arizona", "Utah", "New Mexico", "Colorado", "Nebraska", "Texas",
+#               "Oklahoma", "Kansas")
 
 #filtering
 mapping <- usa[-match(toupper(to_remove), toupper(usa$NAME_1)),]
@@ -262,26 +278,317 @@ simple_map_US <- gSimplify(mapping, tol = 0.01, topologyPreserve = TRUE)
 
 #monarch
 #predictions from full model (monarch current)
-predict_presence_monarch_current <- dismo::predict(object = mx_best_st_t1, x = bv_current_monarch, ext = geographic_extent_monarch, args = "outputformat=cloglog")
+# predict_presence_monarch_current <- dismo::predict(object = model_best_monarch_current, x = bv_current_monarch, ext = geographic_extent_monarch, args = "outputformat=cloglog")
+# 
+# pred_sp_monarch_current <- as(predict_presence_monarch_current, "SpatialPixelsDataFrame")
+# pred_sp_df_monarch_current <- as.data.frame(pred_sp_monarch_current)
+# colnames(pred_sp_df_monarch_current) <- c("value", "x", "y")
 
+#TESTING ------------------ using raster::predict for the predictions
+#make prediction
+# best_monach_model <- readRDS(file = "./data/monarch_current.rds")
+# predict_presence_monarch_current <- raster::predict(object = bv_current_monarch, model = best_monach_model, type = "cloglog")
+
+#monarch current
+predict_presence_monarch_current <- predict(object = bv_current_monarch, model = big_model_list[[1]]@models[[best_monarch]], type = "cloglog")
 pred_sp_monarch_current <- as(predict_presence_monarch_current, "SpatialPixelsDataFrame")
 pred_sp_df_monarch_current <- as.data.frame(pred_sp_monarch_current)
 colnames(pred_sp_df_monarch_current) <- c("value", "x", "y")
 
+#attempting a heatmap
+ggplot() +
+  geom_raster(data = pred_sp_df_monarch_current, aes(x = x, y = y, fill = value)) +
+  geom_point(data = monarch, aes(x = longitude, y = latitude), col='red', cex=0.05) +
+  coord_quickmap() +
+  theme_bw() + 
+  scale_fill_gradientn(colours=viridis::viridis(99),
+                       na.value = "black")
+
+#testing data from WorldClim for current prediction
+bioclim_data <- getData(name = "worldclim", var = "bio", res = 2.5, path = "data")
+names(bioclim_data) <- paste("Bio",seq(1:19), sep = "")
+bioclim_monarch <- crop(x = bioclim_data, y = geographic_extent_monarch)
+
+predict_presence_monarch_current <- predict(object = bioclim_monarch, model = big_model_list[[1]]@models[[best_monarch]], type = "cloglog")
+pred_sp_monarch_current <- as(predict_presence_monarch_current, "SpatialPixelsDataFrame")
+pred_sp_df_monarch_current <- as.data.frame(pred_sp_monarch_current)
+colnames(pred_sp_df_monarch_current) <- c("value", "x", "y")
+
+#attempting a heatmap
+ggplot() +
+  geom_raster(data = pred_sp_df_monarch_current, aes(x = x, y = y, fill = value)) +
+  geom_point(data = monarch, aes(x = longitude, y = latitude), col='red', cex=0.05) +
+  coord_quickmap() +
+  theme_bw() + 
+  scale_fill_gradientn(colours=viridis::viridis(99),
+                       na.value = "black")
+
+
+#monarch future ------------------------------------------------------------
+#make prediction
+
+predict_presence_monarch_future <- predict(object = bv_future_monarch, model = big_model_list[[1]]@models[[best_monarch]], type = "cloglog")
+pred_sp_monarch_future <- as(predict_presence_monarch_future, "SpatialPixelsDataFrame")
+pred_sp_df_monarch_future <- as.data.frame(pred_sp_monarch_future)
+colnames(pred_sp_df_monarch_future) <- c("value", "x", "y")
+
+#attempting a heatmap
+ggplot() +
+  geom_raster(data = pred_sp_df_monarch_future, aes(x = x, y = y, fill = value)) +
+  geom_point(data = monarch, aes(x = longitude, y = latitude), col='red', cex=0.05) +
+  coord_quickmap() +
+  theme_bw() + 
+  scale_fill_gradientn(colours=viridis::viridis(99),
+                       na.value = "black")
+
+#subulata current-------------------------------------REMEMBER you re-ran the models with just milkweeds, so 1 = subulata
+
+bioclim_subulata <- crop(x = bioclim_data, y = geographic_extent_subulata)
+
+predict_presence_subulata_current <- predict(object = bioclim_subulata, model = big_model_list[[1]]@models[[best_subulata]], type = "cloglog")
+pred_sp_subulata_current <- as(predict_presence_subulata_current, "SpatialPixelsDataFrame")
+pred_sp_df_subulata_current <- as.data.frame(pred_sp_subulata_current)
+colnames(pred_sp_df_subulata_current) <- c("value", "x", "y")
+
+long_bounds <- c(-118, -108)
+
+#heatmap
+subulata_current_plot <- 
+  ggplot() +
+  geom_raster(data = pred_sp_df_subulata_current, aes(x = x, y = y, fill = value)) +
+  geom_point(data = subulata, aes(x = longitude, y = latitude), col='red', cex=0.05) +
+  coord_quickmap() +
+  theme_bw() + 
+  scale_fill_gradientn(colours=viridis::viridis(99),
+                       na.value = "black") +
+  xlim(long_bounds) +
+  xlab("Longitude") +
+  ylab("Latitude")
+
+ggsave(plot = subulata_current_plot, filename = "./output/subulata_current_plot.png", device = "png")
+
+#subulata future----------------------------------------
+predict_presence_subulata_future <- predict(object = bv_future_subulata, model = big_model_list[[1]]@models[[best_subulata]], type = "cloglog")
+pred_sp_subulata_future <- as(predict_presence_subulata_future, "SpatialPixelsDataFrame")
+pred_sp_df_subulata_future <- as.data.frame(pred_sp_subulata_future)
+colnames(pred_sp_df_subulata_future) <- c("value", "x", "y")
+
+#heatmap
+subulata_future_plot <- 
+  ggplot() +
+  geom_raster(data = pred_sp_df_subulata_future, aes(x = x, y = y, fill = value)) +
+  geom_point(data = subulata, aes(x = longitude, y = latitude), col='red', cex=0.05) +
+  coord_quickmap() +
+  theme_bw() + 
+  scale_fill_gradientn(colours=viridis::viridis(99),
+                       na.value = "black") +
+  xlim(long_bounds) +
+  xlab("Longitude") +
+  ylab("Latitude")
+  
+ggsave(plot = subulata_future_plot, filename = "./output/subulata_future_plot.png", device = "png")
+
+#asperula current----------------------------------------------------------
+
+bioclim_asperula <- crop(x = bioclim_data, y = geographic_extent_asperula)
+
+predict_presence_asperula_current <- predict(object = bioclim_asperula, model = big_model_list[[2]]@models[[best_asperula]], type = "cloglog")
+pred_sp_asperula_current <- as(predict_presence_asperula_current, "SpatialPixelsDataFrame")
+pred_sp_df_asperula_current <- as.data.frame(pred_sp_asperula_current)
+colnames(pred_sp_df_asperula_current) <- c("value", "x", "y")
+long_bounds_asperula <- geographic_extent_asperula
+
+#long_bounds <- c(-120, -105)
+
+#heatmap
+ggplot() +
+  geom_raster(data = pred_sp_df_asperula_current, aes(x = x, y = y, fill = value)) +
+  geom_point(data = asperula, aes(x = longitude, y = latitude), col='red', cex=0.05) +
+  coord_quickmap() +
+  theme_bw() + 
+  scale_fill_gradientn(colours=viridis::viridis(99),
+                       na.value = "black") #+
+  #xlim(long_bounds)
+
+#asperula future -------------------------------------------------------
+predict_presence_asperula_future <- predict(object = bv_future_asperula, model = big_model_list[[2]]@models[[best_asperula]], type = "cloglog")
+pred_sp_asperula_future <- as(predict_presence_asperula_future, "SpatialPixelsDataFrame")
+pred_sp_df_asperula_future <- as.data.frame(pred_sp_asperula_future)
+colnames(pred_sp_df_asperula_future) <- c("value", "x", "y")
+
+#heatmap
+ggplot() +
+  geom_raster(data = pred_sp_df_asperula_future, aes(x = x, y = y, fill = value)) +
+  geom_point(data = asperula, aes(x = longitude, y = latitude), col='red', cex=0.05) +
+  coord_quickmap() +
+  theme_bw() + 
+  scale_fill_gradientn(colours=viridis::viridis(99),
+                       na.value = "black") +
+  xlim(long_bounds)
+
+
+#angustifolia current ----------------------------------------------------------
+bioclim_angustifolia <- crop(x = bioclim_data, y = geographic_extent_angustifolia)
+
+predict_presence_angustifolia_current <- predict(object = bioclim_angustifolia, model = big_model_list[[3]]@models[[best_angustifolia]], type = "cloglog")
+pred_sp_angustifolia_current <- as(predict_presence_angustifolia_current, "SpatialPixelsDataFrame")
+pred_sp_df_angustifolia_current <- as.data.frame(pred_sp_angustifolia_current)
+colnames(pred_sp_df_angustifolia_current) <- c("value", "x", "y")
+
+#heatmap
+angustifolia_current_plot <- 
+  ggplot() +
+  geom_raster(data = pred_sp_df_angustifolia_current, aes(x = x, y = y, fill = value)) +
+  geom_point(data = angustifolia, aes(x = longitude, y = latitude), col='red', cex=0.05) +
+  coord_quickmap() +
+  theme_bw() + 
+  scale_fill_gradientn(colours=viridis::viridis(99),
+                       na.value = "black") +
+  #xlim(long_bounds) +
+  xlab("Longitude") +
+  ylab("Latitude")
+
+ggsave(plot = angustifolia_current_plot, filename = "./output/angustifolia_current_plot.png", device = "png")
+
+#angustifolia future ---------------------------------------------------------------
+predict_presence_angustifolia_future <- predict(object = bv_future_angustifolia, model = big_model_list[[3]]@models[[best_angustifolia]], type = "cloglog")
+pred_sp_angustifolia_future <- as(predict_presence_angustifolia_future, "SpatialPixelsDataFrame")
+pred_sp_df_angustifolia_future <- as.data.frame(pred_sp_angustifolia_future)
+colnames(pred_sp_df_angustifolia_future) <- c("value", "x", "y")
+
+#heatmap
+angustifolia_future_plot <- 
+  ggplot() +
+  geom_raster(data = pred_sp_df_angustifolia_future, aes(x = x, y = y, fill = value)) +
+  geom_point(data = angustifolia, aes(x = longitude, y = latitude), col='red', cex=0.05) +
+  coord_quickmap() +
+  theme_bw() + 
+  scale_fill_gradientn(colours=viridis::viridis(99),
+                       na.value = "black") +
+  xlab("Longitude") +
+  ylab("Latitude")
+
+ggsave(plot = angustifolia_future_plot, filename = "./output/angustifolia_future_plot.png", device = "png")
+
+#linaria current -----------------------------------------------------------------
+bioclim_linaria <- crop(x = bioclim_data, y = geographic_extent_linaria)
+
+predict_presence_linaria_current <- predict(object = bioclim_linaria, model = big_model_list[[4]]@models[[best_linaria]], type = "cloglog")
+pred_sp_linaria_current <- as(predict_presence_linaria_current, "SpatialPixelsDataFrame")
+pred_sp_df_linaria_current <- as.data.frame(pred_sp_linaria_current)
+colnames(pred_sp_df_linaria_current) <- c("value", "x", "y")
+
+#heatmap
+
+ggplot() +
+  geom_raster(data = pred_sp_df_linaria_current, aes(x = x, y = y, fill = value)) +
+  geom_point(data = linaria, aes(x = longitude, y = latitude), col='red', cex=0.05) +
+  coord_quickmap() +
+  theme_bw() + 
+  scale_fill_gradientn(colours=viridis::viridis(99),
+                       na.value = "black") #+
+ # xlim(-115, -105)
+  #ylim(35, 25)
+
+#linaria future -------------------------------------------------------------------
+predict_presence_linaria_future <- predict(object = bv_future_linaria, model = big_model_list[[4]]@models[[best_linaria]], type = "cloglog")
+pred_sp_linaria_future <- as(predict_presence_linaria_future, "SpatialPixelsDataFrame")
+pred_sp_df_linaria_future <- as.data.frame(pred_sp_linaria_future)
+colnames(pred_sp_df_linaria_future) <- c("value", "x", "y")
+
+#heatmap
+ggplot() +
+  geom_raster(data = pred_sp_df_linaria_future, aes(x = x, y = y, fill = value)) +
+  geom_point(data = linaria, aes(x = longitude, y = latitude), col='red', cex=0.05) +
+  coord_quickmap() +
+  theme_bw() + 
+  scale_fill_gradientn(colours=viridis::viridis(99),
+                       na.value = "black")
+
+#erosa current
+bioclim_erosa <- crop(x = bioclim_data, y = geographic_extent_erosa)
+
+predict_presence_erosa_current <- predict(object = bioclim_erosa, model = big_model_list[[5]]@models[[best_erosa]], type = "cloglog")
+pred_sp_erosa_current <- as(predict_presence_erosa_current, "SpatialPixelsDataFrame")
+pred_sp_df_erosa_current <- as.data.frame(pred_sp_erosa_current)
+colnames(pred_sp_df_erosa_current) <- c("value", "x", "y")
+
+#heatmap
+ggplot() +
+  geom_raster(data = pred_sp_df_erosa_current, aes(x = x, y = y, fill = value)) +
+  geom_point(data = erosa, aes(x = longitude, y = latitude), col='red', cex=0.05) +
+  coord_quickmap() +
+  theme_bw() + 
+  scale_fill_gradientn(colours=viridis::viridis(99),
+                       na.value = "black")
+
+#erosa future
+predict_presence_erosa_future <- predict(object = bv_future_erosa, model = big_model_list[[5]]@models[[best_erosa]], type = "cloglog")
+pred_sp_erosa_future <- as(predict_presence_erosa_future, "SpatialPixelsDataFrame")
+pred_sp_df_erosa_future <- as.data.frame(pred_sp_erosa_future)
+colnames(pred_sp_df_erosa_future) <- c("value", "x", "y")
+
+#heatmap
+ggplot() +
+  geom_raster(data = pred_sp_df_erosa_future, aes(x = x, y = y, fill = value)) +
+  geom_point(data = erosa, aes(x = longitude, y = latitude), col='red', cex=0.05) +
+  coord_quickmap() +
+  theme_bw() + 
+  scale_fill_gradientn(colours=viridis::viridis(99),
+                       na.value = "black") +
+  xlim(long_bounds)
+
+#Looking at Keaton's plot, figure 2 a and b panels
+
+# g13 = ggplot() +  
+#   geom_polygon(data=simple_map_US, aes(x=long, y=lat, group=group), 
+#                color=NA, size=0.25, fill = "grey50") +
+#   geom_polygon(data = simple_map_can, aes(x = long, y = lat, group = group), color = NA, size = 0.25, fill = "grey50") +
+#   geom_tile(data = st_t1_threshold, aes(x=x, y=y), fill = "gray90") + 
+#   geom_polygon(data=simple_map_US, aes(x=long, y=lat, group=group), 
+#                color="grey75", size=0.25, fill = NA) +
+#   geom_polygon(data = simple_map_can, aes(x = long, y = lat, group = group), color = "grey50", size = 0.25, fill = NA) +
+#   geom_point(data = swallowtail_t1, aes(x = longitude, y = latitude), alpha = 0.5, color = "darkorchid1", shape = 3, size = 0.5) +
+#   geom_polygon(data = lakes, aes(x = long, y = lat, group = group), fill = "white", size = 0.25) +
+#   theme(legend.position="bottom") +
+#   theme(legend.key.width=unit(2, "cm")) +
+#   theme_nothing(legend = TRUE) +
+#   # ggtitle("1960-1999") +
+#   coord_quickmap()
+# 
+# 
+# 1 = ggplot() +  
+#   geom_polygon(data=simple_map_US, aes(x=long, y=lat, group=group), 
+#                color=NA, size=0.25, fill = "#440154FF") +
+#   geom_polygon(data = simple_map_can, aes(x = long, y = lat, group = group), color = NA, size = 0.25, fill = "#440154FF") +
+#   geom_tile(data=pred_sp_df_st_t1, aes(x=x, y=y, fill=value)) + 
+#   geom_polygon(data=simple_map_US, aes(x=long, y=lat, group=group), 
+#                color="grey50", size=0.25, fill = NA) +
+#   geom_polygon(data = simple_map_can, aes(x = long, y = lat, group = group), color = "grey50", size = 0.25, fill = NA) +
+#   geom_polygon(data = lakes, aes(x = long, y = lat, group = group), fill = "white", size = 0.25) +
+#   scale_fill_viridis(name = "Probability of Occurence") +
+#   theme(legend.position="right") +
+#   theme(legend.key.width=unit(2, "cm"),
+#         plot.title = element_text(hjust = 0.5, size = 24)) +
+#   #coord_equal(ylim = c(22, 50), xlim = c(-100, -65)) +
+#   theme_nothing(legend = TRUE) +
+#   ggtitle("1960 - 1999") +
+#   coord_quickmap()
+
 #Swallowtail
 #Predictions from full model (Swallowtail T1)
-# predict_presence_st_t1 = dismo::predict(object = mx_best_st_t1, x = bv_t1_st, ext = geographic_extent_st, args = 'outputformat=cloglog')
+#predict_presence_st_t1 = dismo::predict(object = mx_best_st_t1, x = bv_t1_st, ext = geographic_extent_st, args = 'outputformat=cloglog')
 # 
 # pred_sp_st_t1 <- as(predict_presence_st_t1, "SpatialPixelsDataFrame")
 # pred_sp_df_st_t1 <- as.data.frame(pred_sp_st_t1)
 # colnames(pred_sp_df_st_t1) <- c("value", "x", "y")
 
 #predictions from full model (monarch future)
-predict_presence_monarch_future <- dismo::predict(object = mx_best_st_t1, x = bv_future_monarch, ext = geographic_extent_monarch, args = "outputformat=cloglog")
-
-pred_sp_monarch_future <- as(predict_presence_monarch_future, "SpatialPixelsDataFrame")
-pred_sp_df_monarch_future <- as.data.frame(pred_sp_monarch_future)
-colnames(pred_sp_df_monarch_future) <- c("value", "x", "y")
+# predict_presence_monarch_future <- dismo::predict(object = mx_best_st_t1, x = bv_future_monarch, ext = geographic_extent_monarch, args = "outputformat=cloglog")
+# 
+# pred_sp_monarch_future <- as(predict_presence_monarch_future, "SpatialPixelsDataFrame")
+# pred_sp_df_monarch_future <- as.data.frame(pred_sp_monarch_future)
+# colnames(pred_sp_df_monarch_future) <- c("value", "x", "y")
 
 
 #Predictions from full model (Swallowtail T2)
@@ -414,67 +721,65 @@ hp_thresholds_df_t2 =
 #Panel A
 
 #Maximum latitude by year figure
-swallowtail_inset = swallowtail %>%
-  group_by(year) %>%
-  summarize(max_lat = max(latitude), 
-            median_lat = median(latitude),
-            n = n()) %>%
-  filter(max_lat > 35) #Filtering - there are some weird years that only have a few records at really low lattitudes.
+# swallowtail_inset = swallowtail %>%
+#   group_by(year) %>%
+#   summarize(max_lat = max(latitude), 
+#             median_lat = median(latitude),
+#             n = n()) %>%
+#   filter(max_lat > 35) #Filtering - there are some weird years that only have a few records at really low lattitudes.
+# 
+# fig_1_a = ggplot(data = swallowtail_inset, aes(x = year, y = max_lat, size = n)) +
+#   geom_point(alpha = 0.8) +
+#   geom_smooth(data = swallowtail_inset %>%
+#                 filter(year < 2000), aes(x = year, y = max_lat), method = "lm", show.legend = FALSE) +
+#   geom_smooth(data = swallowtail_inset %>%
+#                 filter(year >= 2000), aes(x = year, y = max_lat), method = "lm", show.legend = FALSE) +
+#   geom_smooth(data = swallowtail_inset, show.legend = FALSE) +
+#   theme_classic() +
+#   scale_size_continuous(name = "Number of Observations") +
+#   labs(x = "Year", y = "Maximum Latitude (º)") +
+#   geom_vline(xintercept = 2000, lty = 2) +
+#   annotate(geom = "text", label = "Timeframe Break Point", x = 1992, y = 47.5) +
+#   theme(axis.title = element_text(size = 18),
+#         legend.position = "top")
 
-fig_1_a = ggplot(data = swallowtail_inset, aes(x = year, y = max_lat, size = n)) +
-  geom_point(alpha = 0.8) +
-  geom_smooth(data = swallowtail_inset %>%
-                filter(year < 2000), aes(x = year, y = max_lat), method = "lm", show.legend = FALSE) +
-  geom_smooth(data = swallowtail_inset %>%
-                filter(year >= 2000), aes(x = year, y = max_lat), method = "lm", show.legend = FALSE) +
-  geom_smooth(data = swallowtail_inset, show.legend = FALSE) +
-  theme_classic() +
-  scale_size_continuous(name = "Number of Observations") +
-  labs(x = "Year", y = "Maximum Latitude (º)") +
-  geom_vline(xintercept = 2000, lty = 2) +
-  annotate(geom = "text", label = "Timeframe Break Point", x = 1992, y = 47.5) +
-  theme(axis.title = element_text(size = 18),
-        legend.position = "top")
-
-#monarchs
-monarch_inset <- monarch %>%
-  group_by(date) %>%
-  summarize(max_lat = max(latitude),
-            median_lat = median(latitude),
-            date = year(monarch$date),
-            n = n()) %>%
-  filter(max_lat > 35)
-
-fig_1_a <- ggplot(data = monarch_inset, aes(x = date, y = max_lat, size = n)) +
-  geom_point(alpha = 0.8) +
-  geom_smooth(data = monarch_inset %>%
-                filter(year < 2021), aes(x = year, y = max_lat), method = "lm", show.legend = FALSE) +
-  geom_smooth(data = monarch_inset %>%
-                filter(year >= 2020), aes(x = year, y = max_lat), method = "lm", show.legend = FALSE) +
-  geom_smooth(data = monarch_inset, show.legend = FALSE) +
-  theme_classic() +
-  scale_size_continuous(name = "Number of Observations") +
-  labs (x = "Year", y = "Maximum Latitude (º)") +
-  geom_vline(xintercept = 2020, lty = 2) +
-  annotate(geom = "text", label = "Timeframe Break Point", x = 1992, y = 47.5) +
-  theme(axis.title = element_text(size = 18),
-        legend.position = "top")
+#monarchs ----------- need to up
+# monarch_inset <- monarch %>%
+#   group_by(date) %>%
+#   summarize(max_lat = max(latitude),
+#             median_lat = median(latitude),
+#             date = year(monarch$date),
+#             n = n())
+# 
+# fig_1_a <- ggplot(data = monarch_inset, aes(x = date, y = max_lat, size = n)) +
+#   geom_point(alpha = 0.8) +
+#   geom_smooth(data = monarch_inset %>%
+#                 filter(year < 2021), aes(x = year, y = max_lat), method = "lm", show.legend = FALSE) +
+#   geom_smooth(data = monarch_inset %>%
+#                 filter(year >= 2020), aes(x = year, y = max_lat), method = "lm", show.legend = FALSE) +
+#   geom_smooth(data = monarch_inset, show.legend = FALSE) +
+#   theme_classic() +
+#   scale_size_continuous(name = "Number of Observations") +
+#   labs (x = "Year", y = "Maximum Latitude (º)") +
+#   geom_vline(xintercept = 2020, lty = 2) +
+#   annotate(geom = "text", label = "Timeframe Break Point", x = 1992, y = 47.5) +
+#   theme(axis.title = element_text(size = 18),
+#         legend.position = "top")
 
 #subulata
 subulata_inset <- subulata %>%
-  group_by(date) %>%
+  mutate(year = year(date)) %>%
+  group_by(year) %>%
   summarize(max_lat = max(latitude),
             median_lat = median(latitude),
-            date = year(subulata$date),
-            n = n()) %>%
-  filter(max_lat > 35)
+            n = n())
 
-fig_1_a <- ggplot(data = subulata_inset, aes(x = date, y = max_lat, size = n)) +
+fig_1_a <- ggplot(data = subulata_inset, aes(x = year, y = max_lat, size = n)) +
   geom_point(alpha = 0.8) +
-  geom_smooth(data = subulata_inset %>%
-                filter(year < 2000), aes(x = year, y = max_lat), method = "lm", show.legend = FALSE) +
-  geom_smooth(data = subulata_inset %>%
-                filter(year >= 2000), aes(x = year, y = max_lat), method = "lm", show.legend = FALSE) +
+  #geom_smooth(data = subulata_inset %>%
+                #filter(year < 2000), aes(x = year, y = max_lat), method = "lm", show.legend = FALSE) +
+  #geom_smooth(data = subulata_inset %>%
+                #filter(year >= 2000), aes(x = year, y = max_lat), method = "lm", show.legend = FALSE) +
   geom_smooth(data = subulata_inset, show.legend = FALSE) +
   theme_classic() +
   scale_size_continuous(name = "Number of Observations") +

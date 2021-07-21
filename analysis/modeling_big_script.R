@@ -131,16 +131,20 @@ subulata_prepared_data <- prep_data(df = subulata, biovar_master = bv_future_sub
 asperula_prepared_data <- prep_data(df = asperula, biovar_master = bv_future_asperula)
 angustifolia_prepared_data <- prep_data(df = angustifolia, biovar_master = bv_future_angustifolia)
 linaria_prepared_data <- prep_data(df = linaria, biovar_master = bv_future_linaria)
+erosa_prepared_data <- prep_data(df = erosa, biovar_master = bv_future_erosa)
 
 #--------------------------------------------------------------------------stopped here w/ editing for additional species
 #hostplant1_prepared_data = prep_data(hostplant_1, bv_t1_hp_1, bv_t2_hp_1)
 #hostplant2_prepared_data = prep_data(hostplant_2, bv_t1_hp_2, bv_t2_hp_2)
 #hostplant3_prepared_data = prep_data(hostplant_3, bv_t1_hp_3, bv_t2_hp_3)
 
-#Merging all the mini-lists into a large list of dataframes
-prepared_data_master <- c(monarch_prepared_data, subulata_prepared_data)
+#Merging all the mini-lists into a large list of dataframes ------------ took monarchs out of this to make it run more quickly for poster figures 7/20
+prepared_data_master <- c(#monarch_prepared_data, 
+                          subulata_prepared_data, asperula_prepared_data,
+                          angustifolia_prepared_data, linaria_prepared_data, erosa_prepared_data)
 
-names(prepared_data_master) = c("monarch", "subulata")
+names(prepared_data_master) = c(#"monarch",
+                                "subulata", "asperula", "angustifolia", "linaria", "erosa")
 # prepared_data_master = c(swallowtail_prepared_data, 
 #                          hostplant1_prepared_data, 
 #                          hostplant2_prepared_data, 
@@ -150,7 +154,7 @@ names(prepared_data_master) = c("monarch", "subulata")
 #                                 "hp2_t1", "hp2_t2", "hp3_t1", "hp3_t2")
 
 
-# blockCV Train-Test Split for all 4 models ------------------------------------------------
+# blockCV Train-Test Split for all models ------------------------------------------------
 #Running spatialBlock function over every dataframe in the list
 #
 block_list = list()
@@ -181,7 +185,6 @@ saveRDS(block_list, "./data/block_list.rds")
 block_list <- readRDS(file = "./data/block_list.rds") #use this to load in block_list
 
 #Getting dataframes to feed into the model (dropping NAs)
-#monarch
 
 model_data_list <- list()
 for (i in 1:length(prepared_data_master)) {
@@ -277,8 +280,9 @@ model_func <- function(data = NULL, env_data = NULL) {
                      
   return(eval)
 }
-#test on one dataset
-#one_model <- model_func(data = train_test_data_list[[2]], env_data = bv_current)
+
+#run just one model - asperula
+#asperula_model <- model_func(data = train_test_data_list[[3]], env_data = bv_current)
 
 start = Sys.time()
 #Running the model function over the list of data -- this takes a long time!
@@ -366,11 +370,15 @@ for (i in 1:length(train_test_data_list)) {
 # }
 
 
-names(master_list) <- c("monarch", 
-                           "subulata")
+names(master_list) <- c(#"monarch", 
+                           "subulata", "asperula", "angustifolia", "linaria", "erosa")
 
-names_list <- c("bv_current_monarch", 
-               "bv_current_subulata")
+names_list <- c(#"bv_current_monarch", 
+               "bv_current_subulata",
+               "bv_current_asperula",
+               "bv_current_angustifolia",
+               "bv_current_linaria",
+               "bv_current_erosa")
 
 evaluations <- list()
 for(i in 1:length(master_list)) {
@@ -396,12 +404,25 @@ for(i in 1:length(master_list)) {
 #Saving evaluations
 saveRDS(evaluations, file = "./data/evaluations.rds")
 
-#identify best model using maximized AUC as optimality criterion
-best_monarch <- which(big_model_list[[1]]@results$auc.val.avg == max(big_model_list[[1]]@results$auc.val.avg))
-saveRDS(big_model_list[[1]]@models[best_monarch], file = "./data/monarch_current.rds")
+#identify best model using maximized AUC as optimality criterion #### USE THIS####
+# best_monarch <- which(big_model_list[[1]]@results$auc.val.avg == max(big_model_list[[1]]@results$auc.val.avg))
+# saveRDS(big_model_list[[1]]@models[best_monarch], file = "./data/monarch_current.rds")
+# typeof(big_model_list[[1]]@models[best_monarch])
 
-best_subulata <- which(big_model_list[[2]]@results$auc.val.avg == max(big_model_list[[2]]@results$auc.val.avg))
-saveRDS(big_model_list[[2]]@models[best_monarch], file = "./data/subulata_current.rds")
+best_subulata1 <- which(big_model_list[[1]]@results$auc.val.avg == max(big_model_list[[1]]@results$auc.val.avg))
+saveRDS(big_model_list[[1]]@models[best_subulata], file = "./data/subulata_current1.rds")
+
+best_asperula <- which(big_model_list[[2]]@results$auc.val.avg == max(big_model_list[[2]]@results$auc.val.avg))
+saveRDS(big_model_list[[2]]@models[best_asperula], file = "./data/asperula_current.rds")
+
+best_angustifolia <- which(big_model_list[[3]]@results$auc.val.avg == max(big_model_list[[3]]@results$auc.val.avg))
+saveRDS(big_model_list[[3]]@models[best_angustifolia], file = "./data/angustifolia_current.rds")
+
+best_linaria <- which(big_model_list[[4]]@results$auc.val.avg == max(big_model_list[[4]]@results$auc.val.avg))
+saveRDS(big_model_list[[4]]@models[best_linaria], file = "./data/linaria_current.rds")
+
+best_erosa <- which(big_model_list[[5]]@results$auc.val.avg == max(big_model_list[[5]]@results$auc.val.avg))
+saveRDS(big_model_list[[5]]@models[best_erosa], file = "./data/erosa_current.rds")
 
 # Selecting Final Models and Running on All Data -------------------------- 
 #Let's build final models
@@ -441,10 +462,12 @@ full_model <- function(models = NULL, full_data = NULL, best_model_index = NULL,
 # FC_best
 # rm_best # Stop here and send the output
 
+############DO NOT USE THIS#######################
+
 monarch_current <- full_model(models = big_model_list[[1]], best_model_index = model_selection_index_list[[1]],
                               full_data = monarch, name = "monarch_current", env_data = bv_current_monarch)
 
-subulata_current <- full_model(models = big_model_list[[2]], best_model_index = model_selection_index_list[[2]],
+subulata_current <- full_model(models = big_model_list[[2]], best_model_index = model_selection_index_list[[1]],
                                full_data = subulata, name = "subulata_current", env_data = bv_current_subulata)
 # 
 # swallowtail_t1 = full_model(models = big_model_list[[1]], best_model_index = model_selection_index_list[[1]],
