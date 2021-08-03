@@ -538,6 +538,19 @@ ggplot() +
                        na.value = "black") +
   xlim(long_bounds)
 
+#attempt to look at bio variable importance
+subulata_current <- readRDS("./data/subulata_current1.rds")
+subulata_current[[1]]@results
+#eval.variable.importance(subulata_current[[1]])
+
+#evalplot.stats(e = subulata_current[[1]]@results, stats = "Entropy")
+
+big_model_list <- readRDS(file = "./data/big_model_list.rds")
+model_1 <- big_model_list[[1]]
+ENMeval::eval.variable.importance(model_1)
+
+evalplot.stats(e = model_1, stats = "auc.val.avg", color.var = 1)
+
 #Looking at Keaton's plot, figure 2 a and b panels
 
 # g13 = ggplot() +  

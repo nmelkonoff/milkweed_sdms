@@ -408,6 +408,7 @@ saveRDS(evaluations, file = "./data/evaluations.rds")
 # best_monarch <- which(big_model_list[[1]]@results$auc.val.avg == max(big_model_list[[1]]@results$auc.val.avg))
 # saveRDS(big_model_list[[1]]@models[best_monarch], file = "./data/monarch_current.rds")
 # typeof(big_model_list[[1]]@models[best_monarch])
+#USE THIS TO SELECT BEST MODELS TO USE IN MANUSCRIPT FIGURES SCRIPT--------------
 
 best_subulata1 <- which(big_model_list[[1]]@results$auc.val.avg == max(big_model_list[[1]]@results$auc.val.avg))
 saveRDS(big_model_list[[1]]@models[best_subulata], file = "./data/subulata_current1.rds")
